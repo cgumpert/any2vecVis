@@ -1,0 +1,35 @@
+body {
+	margin: 0;
+}
+
+button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+svg {
+	border: 1px solid red;
+	display: block;
+}
+
+.view {
+  fill: None;
+  stroke: None;
+}
+
+.node {
+  stroke: grey;
+  fill: #BBB;
+}
+
+.label {
+  font-size: 0.75em;
+  font-family: 'Lato', sans-serif;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.selected {
+  fill: #FAA;
+}

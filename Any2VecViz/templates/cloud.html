@@ -4,9 +4,16 @@
   <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Lato">
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
   <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='embedding_viz.js') }}"></script>  <script>
+  </script>
 </head>
 <body>
-<button>Reset</button>
+  <div id="controls">
+    <button id="reset">Reset</button>
+    <label id="toggle-labels"><input type="checkbox" onclick="toggleLabels()" autocomplete="off"> show labels</label>
+  </div>
 <svg></svg>
-<script type="text/javascript" src="{{ url_for('static', filename='embedding_viz.js') }}"></script>
+<script>
+draw_embedding();
+</script>
 </body>

@@ -36,6 +36,15 @@ var data = [
   }
 ];
 
+var labels_visible = false;
+
+function toggleLabels() {
+	var new_state = labels_visible ? 'hidden' : 'visible';
+	d3.selectAll('.label').style('visibility', new_state);
+	labels_visible = !labels_visible;
+}
+
+function draw_embedding() {
 // set svg to full screen
 var width = window.innerWidth - 2;
 var height = window.innerHeight - 2;
@@ -134,4 +143,5 @@ function highlight(cluster) {
   .data(data)
   .filter(function(d) {return d.cluster == cluster;})
   .classed('selected', true);
+}
 }

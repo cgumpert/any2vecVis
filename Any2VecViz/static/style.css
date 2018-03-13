@@ -1,11 +1,28 @@
+* {
+	font-family: 'Lato', sans-serif;
+}
+
 body {
 	margin: 0;
 }
 
-button {
-  position: absolute;
-  top: 20px;
-  left: 20px;
+input[type=checkbox] {
+	vertical-align: middle;
+}
+
+#controls {
+	position: absolute;
+	top: 20px;
+	left: 20px;
+}
+
+#reset {
+	vertical-align: middle;
+}
+
+#toggle-labels {
+	vertical-align: middle;
+	margin-left: 20px;
 }
 
 svg {
@@ -14,22 +31,22 @@ svg {
 }
 
 .view {
-  fill: None;
-  stroke: None;
+	fill: None;
+	stroke: None;
 }
 
 .node {
-  stroke: grey;
-  fill: #BBB;
+	stroke: grey;
+	fill: #BBB;
 }
 
 .label {
-  font-size: 0.75em;
-  font-family: 'Lato', sans-serif;
-  text-anchor: middle;
-  dominant-baseline: middle;
+	font-size: 0.75em;
+	text-anchor: middle;
+	dominant-baseline: middle;
+	visibility: hidden;
 }
 
 .selected {
-  fill: #FAA;
+	fill: #FAA;
 }

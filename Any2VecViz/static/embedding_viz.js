@@ -14,8 +14,8 @@ function draw_embedding(
 	ymax
 ) {
 // set svg to full screen
-var width = window.innerWidth - 2;
-var height = window.innerHeight - 2;
+var width = window.innerWidth - 22;
+var height = window.innerHeight - 22;
 var svg = d3.select("svg").attr('width', width).attr('height', height);
 
 var zoom = d3.zoom()

@@ -55,13 +55,16 @@ var points = svg.selectAll('circle')
   .attr('x', function (d) {console.log(d); return x(d.x);})
   .attr('y', function (d) {return y(d.y);})
   .attr('cursor', 'pointer')
-  .on('click', function(d) {clearSelection(); highlight(d.cluster);})
+  .on('click', function(d) {highlight(d.cluster);})
   .text(function (d) {return d.label;})
   .append('svg:title')
   .text(function (d) {return d.label;});
   
-d3.select("button")
+d3.select("#reset")
     .on("click", resetted);
+
+d3.select("#clear")
+    .on("click", clearSelection);
 
 svg.call(zoom);
 
@@ -81,9 +84,9 @@ function zoomed() {
 
 function resetted() {
   clearSelection();
-    svg.transition()
-      .duration(750)
-      .call(zoom.transform, d3.zoomIdentity);
+  svg.transition()
+    .duration(750)
+    .call(zoom.transform, d3.zoomIdentity);
 }
 
 function clearSelection() {

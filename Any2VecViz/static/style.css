@@ -20,6 +20,11 @@ input[type=checkbox] {
 	vertical-align: middle;
 }
 
+#clear {
+	vertical-align: middle;
+	margin-left: 20px;
+}
+
 #toggle-labels {
 	vertical-align: middle;
 	margin-left: 20px;

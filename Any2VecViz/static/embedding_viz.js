@@ -47,15 +47,16 @@ var points = svg.selectAll('circle')
   
   points
   .append("circle")
-    .classed('node', true)
+  .classed('node', true)
   .attr('r', 5)
-  .attr('cx', function (d) {console.log(d); return x(d.x);})
-  .attr('cy', function (d) {return y(d.y);});
+  .attr('cx', function (d) {return x(d.x);})
+  .attr('cy', function (d) {return y(d.y);})
+  .on('click', function(d) {highlight(d.cluster);});
   
   points
   .append("text")
   .classed('label', true)
-  .attr('x', function (d) {console.log(d); return x(d.x);})
+  .attr('x', function (d) {return x(d.x);})
   .attr('y', function (d) {return y(d.y);})
   .attr('cursor', 'pointer')
   .on('click', function(d) {highlight(d.cluster);})

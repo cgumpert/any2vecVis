@@ -30,12 +30,17 @@ input[type=checkbox] {
 
 #clear {
 	vertical-align: middle;
-	margin-left: 20px;
+	margin-left: 10px;
 }
 
 #toggle-labels {
 	vertical-align: middle;
-	margin-left: 20px;
+	margin-left: 8px;
+}
+
+#query {
+	vertical-align: middle;
+	margin-left: 8px;
 }
 
 svg {
@@ -61,7 +66,4 @@ svg {
 	dominant-baseline: middle;
 	visibility: hidden;
 	cursor: pointer;
-}
-
-.selected {
 }

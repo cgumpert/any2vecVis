@@ -16,13 +16,14 @@ function draw_embedding(
 	ymin,
 	ymax
 ) {
+
 // set svg to full screen
 var width = window.innerWidth - 22;
 var height = window.innerHeight - 22;
 var svg = d3.select("svg").attr('width', width).attr('height', height);
 
 var zoom = d3.zoom()
-    .scaleExtent([1, 50])
+    .scaleExtent([1, 100])
     .translateExtent([[-100, -100], [width + 90, height + 100]])
     .on("zoom", zoomed);
 
@@ -71,6 +72,9 @@ d3.select("#reset")
 d3.select("#clear")
     .on("click", clearSelection);
 
+d3.select("#query_input")
+	.on("search", queryToken);
+
 svg.call(zoom);
 
 function zoomed() {
@@ -94,10 +98,19 @@ function resetted() {
     .call(zoom.transform, d3.zoomIdentity);
 }
 
+function clearQuerySelection() {
+  svg.selectAll('.queried')
+  	.attr('r', 5)
+  	.style('fill', '#BBB')
+  	.classed('queried', false);
+}
+
 function clearSelection() {
+  clearQuerySelection();
   svg.selectAll('.node').style('fill', '#BBB').classed('selected', false);
   svg.selectAll('.label').style('fill', '#000').classed('selected', false);
   d3.selectAll('#clusters span').remove();
+  d3.select('#query_input').node().value = '';
 }
 
 function highlight(cluster, label) {
@@ -119,5 +132,21 @@ function highlight(cluster, label) {
     .append('br');
   
   currentColor = (currentColor + 1) % 10;
+}
+
+function queryToken() {
+	clearQuerySelection();
+	var token = d3.select('#query_input').node().value;
+	svg.selectAll('.node')
+      .filter(function(d) {return d.label.includes(token);})
+      .classed('queried', true)
+      .transition()
+      .duration(500)
+      .attr('r', 20)
+      .style('fill', 'blue')
+      .transition()
+      .duration(750)
+      .attr('r', 10)
+      .style('fill', 'red');     
 }
 }

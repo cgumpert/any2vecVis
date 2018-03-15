@@ -4,8 +4,7 @@
   <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Lato">
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
   <script src="https://d3js.org/d3.v5.min.js"></script>
-  <script type="text/javascript" src="{{ url_for('static', filename='embedding_viz.js') }}"></script>  <script>
-  </script>
+  <script type="text/javascript" src="{{ url_for('static', filename='embedding_viz.js') }}"></script> 
 </head>
 <body>
   <div id="controls">
@@ -14,6 +13,6 @@
   </div>
 <svg></svg>
 <script>
-draw_embedding();
+draw_embedding({{ visData|safe}}, {{ xmin }}, {{ xmax }}, {{ ymin }}, {{ ymax }});
 </script>
 </body>

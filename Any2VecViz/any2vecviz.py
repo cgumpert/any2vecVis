@@ -1,5 +1,6 @@
 import logging
 from flask import Flask, render_template
+import numpy as np
 import time
 
 # set up logging
@@ -12,7 +13,16 @@ cache = {}
 
 @app.route('/')
 def index():
-    return render_template('cloud.html')
+    X = cache.get('embedded_X', np.identity(2))
+    _min = np.min(X, axis = 0)
+    _max = np.max(X, axis = 0)
+    return render_template('cloud.html',
+                           visData = cache.get('data',[]),
+                           xmin = _min[0],
+                           xmax = _max[0],
+                           ymin = _min[1],
+                           ymax = _max[1],
+                           )
 
 def load_vector_model(infile_name, input_type):
     start = time.perf_counter()
@@ -46,6 +56,7 @@ def prepare_data(embedding, vocab):
              'label': token,
              'x': embedding[v.index, 0],
              'y': embedding[v.index, 1],
+             'cluster': np.random.randint(1000),
              } for token, v in vocab.items()]
     end = time.perf_counter()
     return data, end - start
@@ -99,5 +110,6 @@ if __name__ == '__main__':
     # store things in cache
     cache['model'] = model
     cache['data'] = data
+    cache['embedded_X'] = X
     
     app.run()

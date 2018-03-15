@@ -51,15 +51,16 @@ var points = svg.selectAll('circle')
   .attr('r', 5)
   .attr('cx', function (d) {return x(d.x);})
   .attr('cy', function (d) {return y(d.y);})
-  .on('click', function(d) {highlight(d.cluster);});
+  .on('click', function(d) {highlight(d.cluster, d.label);})
+  .append('svg:title')
+  .text(function (d) {return d.label;});
   
   points
   .append("text")
   .classed('label', true)
   .attr('x', function (d) {return x(d.x);})
   .attr('y', function (d) {return y(d.y);})
-  .attr('cursor', 'pointer')
-  .on('click', function(d) {highlight(d.cluster);})
+  .on('click', function(d) {highlight(d.cluster, d.label);})
   .text(function (d) {return d.label;})
   .append('svg:title')
   .text(function (d) {return d.label;});
@@ -96,20 +97,26 @@ function resetted() {
 function clearSelection() {
   svg.selectAll('.node').style('fill', '#BBB').classed('selected', false);
   svg.selectAll('.label').style('fill', '#000').classed('selected', false);
+  d3.selectAll('#clusters span').remove();
 }
 
-function highlight(cluster) {
-  svg.selectAll('.node')
+function highlight(cluster, label) {
+  var node_selection = svg.selectAll('.node')
   .data(data)
-  .filter(function(d) {return d.cluster == cluster;})
-  .style('fill', colorScale(currentColor))
-  .classed('selected', true);
+  .filter(function(d) {return d.cluster == cluster;});
+  
+  node_selection.style('fill', colorScale(currentColor)).classed('selected', true);
   
   svg.selectAll('.label')
   .data(data)
   .filter(function(d) {return d.cluster == cluster;})
   .style('fill', colorScale(currentColor))
   .classed('selected', true);
+  
+  d3.select("#clusters")
+    .append('span')
+    .text(label + ' (#' + cluster + ', n = ' + node_selection.size() + ')').style('color', colorScale(currentColor))
+    .append('br');
   
   currentColor = (currentColor + 1) % 10;
 }

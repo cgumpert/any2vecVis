@@ -12,6 +12,8 @@
     <button id="clear">Clear selection</button>
     <label id="toggle-labels"><input type="checkbox" onclick="toggleLabels()" autocomplete="off"> show labels</label>
   </div>
+  <div id="clusters">
+  </div>
 <svg></svg>
 <script>
 draw_embedding({{ visData|safe}}, {{ xmin }}, {{ xmax }}, {{ ymin }}, {{ ymax }});

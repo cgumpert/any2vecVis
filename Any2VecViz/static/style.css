@@ -16,6 +16,14 @@ input[type=checkbox] {
 	left: 20px;
 }
 
+#clusters {
+	position: absolute;
+	top: 60px;
+	left: 20px;
+	font-size: 12px;
+	background: rgba(255, 255, 255, 0.8);
+}
+
 #reset {
 	vertical-align: middle;
 }
@@ -44,6 +52,7 @@ svg {
 .node {
 	stroke: grey;
 	fill: #BBB;
+	cursor: pointer;
 }
 
 .label {
@@ -51,6 +60,7 @@ svg {
 	text-anchor: middle;
 	dominant-baseline: middle;
 	visibility: hidden;
+	cursor: pointer;
 }
 
 .selected {

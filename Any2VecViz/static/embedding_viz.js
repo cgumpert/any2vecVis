@@ -1,5 +1,8 @@
 var labels_visible = false;
 
+var colorScale = d3.scaleOrdinal(d3['schemeCategory10']);
+var currentColor = 0;
+
 function toggleLabels() {
 	var new_state = labels_visible ? 'hidden' : 'visible';
 	d3.selectAll('.label').style('visibility', new_state);
@@ -90,19 +93,23 @@ function resetted() {
 }
 
 function clearSelection() {
-  svg.selectAll('.node').classed('selected', false);
-  svg.selectAll('.label').classed('selected', false);
+  svg.selectAll('.node').style('fill', '#BBB').classed('selected', false);
+  svg.selectAll('.label').style('fill', '#000').classed('selected', false);
 }
 
 function highlight(cluster) {
   svg.selectAll('.node')
   .data(data)
   .filter(function(d) {return d.cluster == cluster;})
+  .style('fill', colorScale(currentColor))
   .classed('selected', true);
   
   svg.selectAll('.label')
   .data(data)
   .filter(function(d) {return d.cluster == cluster;})
+  .style('fill', colorScale(currentColor))
   .classed('selected', true);
+  
+  currentColor = (currentColor + 1) % 10;
 }
 }

@@ -180,6 +180,10 @@ function showSimilarities(token) {
 
 	bars.append('text')
 	  .classed('sim-label', true)
+	  .on('click', function(d) {
+	      clearQuerySelection();
+	      highlightNodes(d.other_token, false);
+	    })
 	  .attr('x', 0.5 * width - 3)
 	  .attr('y', 0.5 * barHeight)
 	  .text(function (d) {return d.other_token;})
@@ -195,8 +199,12 @@ function showSimilarities(token) {
 function queryToken() {
 	clearQuerySelection();
 	var token = d3.select('#query_input').node().value;
+	highlightNodes(token, true);
+}
+
+function highlightNodes(label, contains) {
 	svg.selectAll('.node')
-      .filter(function(d) {return d.label.includes(token);})
+      .filter(function(d) {return contains ? d.label.includes(label) : d.label == label;})
       .classed('queried', true)
       .transition()
       .duration(500)

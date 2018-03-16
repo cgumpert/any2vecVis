@@ -118,7 +118,7 @@ if __name__ == '__main__':
     # run dimensionality reduction
     logger.info('using algorithm %s for dimensionality reduction', args.projection)
     try:
-        X, _time = calculate_embedding(model.wv.vectors, args.projection, n_iter = 250, verbose = 2)
+        X, _time = calculate_embedding(model.wv.vectors, args.projection, verbose = 2)
     except Exception as e:
         logger.critical("failed to perform dimensionality reduction with %r", e)
     else:

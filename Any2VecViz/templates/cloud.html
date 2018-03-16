@@ -10,8 +10,21 @@
   <div id="controls">
     <button id="reset">Reset</button>
     <button id="clear">Clear selection</button>
-    <label id="toggle-labels"><input type="checkbox" onclick="toggleLabels()" autocomplete="off"> show labels</label>
-    <label id="query">query <input type="search" id="query_input"></label>
+    <fieldset class="rb-group">
+      <legend>Display style</legend>
+    	  <label class="rb"><input type="radio" name="toogleLabels" onchange="toggleLabels()" autocomplete="off" checked> nodes </label>
+      <label class="rb"><input type="radio" name="toogleLabels" onchange="toggleLabels()" autocomplete="off"> labels</label>
+    </fieldset>
+    <fieldset class="rb-group">
+      <legend>Node size</legend>
+    	  <label class="rb"><input type="radio" name="nodeSize" autocomplete="off" value="fixed" checked> fixed </label>
+      <label class="rb"><input type="radio" name="nodeSize" autocomplete="off" value="rank"> rank </label>
+      <label class="rb"><input type="radio" name="nodeSize" autocomplete="off" value="count"> count</label>
+    </fieldset>
+    <fieldset class="rb-group">
+      <legend>Query</legend>
+      <input type="search" id="query_input">
+    </fieldset>
   </div>
   <div id="clusters"></div>
   <div id="similarities">

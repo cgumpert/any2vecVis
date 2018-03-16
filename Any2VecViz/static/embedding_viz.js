@@ -1,11 +1,17 @@
 var labels_visible = false;
 
+var defaultRadius = 5;
+var minRadius = 2;
+var maxRadius = 25;
+
 var colorScale = d3.scaleOrdinal(d3['schemeCategory10']);
 var currentColor = 0;
 
 function toggleLabels() {
-	var new_state = labels_visible ? 'hidden' : 'visible';
-	d3.selectAll('.label').style('visibility', new_state);
+	var label_state = labels_visible ? 'hidden' : 'visible';
+	var node_state = labels_visible ? 'visible' : 'hidden';
+	d3.selectAll('.label').style('visibility', label_state);
+	d3.selectAll('.node').style('visibility', node_state);
 	labels_visible = !labels_visible;
 }
 
@@ -35,6 +41,17 @@ var y = d3.scaleLinear()
     .domain([ymin, ymax])
     .range([-1, height + 1]);
 
+var rankScale = d3.scaleLog()
+	.domain([1, data.length + 1])
+	.range([maxRadius, minRadius]);
+
+var minTokenCount = Math.min.apply(Math,data.map(function(o){return o.count;}));
+var maxTokenCount = Math.max.apply(Math,data.map(function(o){return o.count;}));
+
+var countScale = d3.scaleLog()
+	.domain([minTokenCount, maxTokenCount])
+	.range([minRadius, maxRadius]);
+
 var view = svg.append("rect")
     .attr("class", "view")
     .attr("x", 0.5)
@@ -49,7 +66,7 @@ var points = svg.selectAll('circle')
   points
   .append("circle")
   .classed('node', true)
-  .attr('r', 5)
+  .attr('r', defaultRadius)
   .attr('cx', function (d) {return x(d.x);})
   .attr('cy', function (d) {return y(d.y);})
   .on('click', function(d) {onTokenClick(d);})
@@ -74,6 +91,9 @@ d3.select("#clear")
 
 d3.select("#query_input")
 	.on("search", queryToken);
+
+d3.selectAll("input[name=nodeSize]")
+	.on("change", changeNodeSize);
 
 svg.call(zoom);
 
@@ -100,7 +120,7 @@ function resetted() {
 
 function clearQuerySelection() {
   svg.selectAll('.queried')
-  	.attr('r', 5)
+  	.attr('r', defaultRadius)
   	.style('fill', '#BBB')
   	.classed('queried', false);
 }
@@ -194,6 +214,22 @@ function showSimilarities(token) {
 	  .attr('x', function(d) {return width - (0.5 * width * (1 - d.similarity)) - 2;})
 	  .attr('y', 0.5 * barHeight)
 	  .text(function (d) {return d.similarity.toFixed(3);});
+}
+
+function changeNodeSize() {
+	var size_option = d3.select('input[name=nodeSize]:checked').node().value;
+	svg.selectAll('.node')
+      .transition()
+      .duration(500)
+      .attr('r', function(d) {
+        var radius = defaultRadius;
+       	if (size_option === "rank") {
+        	  radius = rankScale(d.rank + 1);
+        	} else if (size_option === "count") {
+        	  radius = countScale(d.count);
+        	}
+        	return radius;
+      });
 }
 
 function queryToken() {

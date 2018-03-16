@@ -13,8 +13,8 @@
     <label id="toggle-labels"><input type="checkbox" onclick="toggleLabels()" autocomplete="off"> show labels</label>
     <label id="query">query <input type="search" id="query_input"></label>
   </div>
-  <div id="clusters">
-  </div>
+  <div id="clusters"></div>
+  <div id="similarities"></div>
 <svg></svg>
 <script>
 draw_embedding({{ visData|safe}}, {{ xmin }}, {{ xmax }}, {{ ymin }}, {{ ymax }});

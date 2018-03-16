@@ -70,10 +70,12 @@ def prepare_data(embedding, vocab, cluster_ids, model):
              'x': embedding[v.index, 0],
              'y': embedding[v.index, 1],
              'cluster': cluster_ids[v.index],
-             'similarities': [{'other_token': other_token,
-                               'similarity': model.wv.similarity(token, other_token)
-                              } for other_token, other_v in vocab.items() if cluster_ids[other_v.index] == cluster_ids[v.index]  
-                             ]
+             'similarities': sorted(
+                 [{'other_token': other_token,
+                   'similarity': model.wv.similarity(token, other_token)
+                  } for other_token, other_v in vocab.items()
+                    if (cluster_ids[other_v.index] == cluster_ids[v.index]) and (other_token != token)  
+                 ], key = lambda a: a['similarity'], reverse = True)
              } for token, v in vocab.items()]
     end = time.perf_counter()
     return data, end - start

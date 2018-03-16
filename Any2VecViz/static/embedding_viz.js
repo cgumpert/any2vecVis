@@ -52,7 +52,7 @@ var points = svg.selectAll('circle')
   .attr('r', 5)
   .attr('cx', function (d) {return x(d.x);})
   .attr('cy', function (d) {return y(d.y);})
-  .on('click', function(d) {highlight(d.cluster, d.label);})
+  .on('click', function(d) {highlight(d); showSimilarities(d.id);})
   .append('svg:title')
   .text(function (d) {return d.label;});
   
@@ -61,7 +61,7 @@ var points = svg.selectAll('circle')
   .classed('label', true)
   .attr('x', function (d) {return x(d.x);})
   .attr('y', function (d) {return y(d.y);})
-  .on('click', function(d) {highlight(d.cluster, d.label);})
+  .on('click', function(d) {highlight(d); showSimilarities(d.id);})
   .text(function (d) {return d.label;})
   .append('svg:title')
   .text(function (d) {return d.label;});
@@ -113,25 +113,41 @@ function clearSelection() {
   d3.select('#query_input').node().value = '';
 }
 
-function highlight(cluster, label) {
+function highlight(token) {
   var node_selection = svg.selectAll('.node')
   .data(data)
-  .filter(function(d) {return d.cluster == cluster;});
+  .filter(function(d) {return d.cluster == token.cluster;});
   
   node_selection.style('fill', colorScale(currentColor)).classed('selected', true);
   
   svg.selectAll('.label')
   .data(data)
-  .filter(function(d) {return d.cluster == cluster;})
+  .filter(function(d) {return d.cluster == token.cluster;})
   .style('fill', colorScale(currentColor))
   .classed('selected', true);
   
   d3.select("#clusters")
     .append('span')
-    .text(label + ' (#' + cluster + ', n = ' + node_selection.size() + ')').style('color', colorScale(currentColor))
+    .text(token.label + ' (#' + token.cluster + ', n = ' + node_selection.size() + ')').style('color', colorScale(currentColor))
     .append('br');
   
   currentColor = (currentColor + 1) % 10;
+}
+
+function showSimilarities(token_index) {
+	var this_token = data.filter(d => d.id == token_index)[0];
+	
+	var other_tokens = d3.select("#similarities")
+	  .selectAll('span')
+	  .data(this_token.similarities, function(d) {return d.other_token;});
+	
+	other_tokens.exit().remove();
+	
+	other_tokens  
+	  .enter()
+	  .append('span')
+	  .text(function (d) {return d.other_token + ': ' + d.similarity.toFixed(2);})
+	  .append('br');
 }
 
 function queryToken() {

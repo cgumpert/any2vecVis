@@ -24,6 +24,15 @@ input[type=checkbox] {
 	background: rgba(255, 255, 255, 0.8);
 }
 
+#similarities {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	width: 200px;
+	font-size: 12px;
+	background: rgba(255, 255, 255, 0.8);
+}
+
 #reset {
 	vertical-align: middle;
 }

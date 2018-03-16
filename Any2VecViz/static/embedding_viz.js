@@ -164,30 +164,32 @@ function showSimilarities(token) {
 	sim_svg.attr('height', (barHeight + 2) * token.similarities.length);
 	
 	var sim_bars = sim_svg 
-	  .selectAll('rect')
+	  .selectAll('g')
 	  .data(token.similarities, function(d) {return d.other_token;});
 
 	sim_bars.exit().remove();
-	sim_bars.enter()
-	  .append('rect')
+	var bars = sim_bars.enter()
+	  .append('g')
+	  .attr('transform', function(d,i) {return 'translate(0,' + ((barHeight + 2) * i) + ')';});
+	
+	bars.append('rect')
 	  .attr('width', function(d) {return d.similarity * 0.5 * width;})
 	  .attr('height', barHeight)
 	  .attr('x', 0.5 * width)
-	  .attr('y', function(d, i) {return (barHeight + 2) * i;})
 	  .style('fill', colorScale(currentColor));
 
-	var sim_labels = sim_svg 
-	  .selectAll('.sim-label')
-	  .data(token.similarities, function(d) {return d.other_token;});
-	 
-	sim_labels.exit().remove();
-	sim_labels.enter()
-	  .append('text')
+	bars.append('text')
 	  .classed('sim-label', true)
 	  .attr('x', 0.5 * width - 3)
-	  .attr('y', function(d, i) {return (barHeight + 2) * i + 0.5 * barHeight + 1;})
+	  .attr('y', 0.5 * barHeight)
 	  .text(function (d) {return d.other_token;})
 	  .style('fill', colorScale(currentColor));
+
+	bars.append('text')
+	  .classed('sim-text', true)
+	  .attr('x', function(d) {return width - (0.5 * width * (1 - d.similarity)) - 2;})
+	  .attr('y', 0.5 * barHeight)
+	  .text(function (d) {return d.similarity.toFixed(3);});
 }
 
 function queryToken() {

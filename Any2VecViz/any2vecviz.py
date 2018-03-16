@@ -35,28 +35,45 @@ def load_vector_model(infile_name, input_type):
     
     return model, end - start
 
-def calculate_embedding(vectors, **kwargs):
+def calculate_embedding(vectors, embedding_type, **kwargs):
     start = time.perf_counter()
-    if args.projection == 'tsne':
+    if embedding_type == 'tsne':
         from sklearn.manifold import TSNE
         tsne = TSNE(**kwargs)
         X = tsne.fit_transform(vectors)
-    elif args.projection == 'pca':
+    elif embedding_type == 'pca':
         pass
     else:
-        raise RuntimeError("unknown projection '%s'" % args.projection)
+        raise RuntimeError("unknown projection '%s'" % embedding_type)
     end = time.perf_counter()
     
     return X, end - start
 
-def prepare_data(embedding, vocab):
+def build_clusters(vectors, cluster_type, **kwargs):
     start = time.perf_counter()
+    if cluster_type == 'agglo':
+        from sklearn.cluster import AgglomerativeClustering
+        cluster_ids = AgglomerativeClustering(**kwargs).fit_predict(vectors)
+    else:
+        raise RuntimeError("unknown clustering '%s'" % cluster_type)
+    end = time.perf_counter()
+    
+    return cluster_ids, end - start
+
+def prepare_data(embedding, vocab, cluster_ids, model):
+    start = time.perf_counter()
+    sorted_vocab = sorted(vocab, key = lambda t: vocab[t].count, reverse = True)
     data = [{'id': v.index,
              'count': v.count,
+             'rank': sorted_vocab.index(token) + 1,
              'label': token,
              'x': embedding[v.index, 0],
              'y': embedding[v.index, 1],
-             'cluster': np.random.randint(1000),
+             'cluster': cluster_ids[v.index],
+             'similarities': [{'other_token': other_token,
+                               'similarity': model.wv.similarity(token, other_token)
+                              } for other_token, other_v in vocab.items() if cluster_ids[other_v.index] == cluster_ids[v.index]  
+                             ]
              } for token, v in vocab.items()]
     end = time.perf_counter()
     return data, end - start
@@ -79,6 +96,12 @@ if __name__ == '__main__':
                         choices = ['tsne', 'pca'],
                         help = 'dimensionality reduction algorithm'
                         )
+    parser.add_argument('--clustering',
+                        type = str,
+                        default = 'agglo',
+                        choices = ['agglo'],
+                        help = 'cluster algorithm for building finding clusters in vector space'
+                        )
     args = parser.parse_args()
     
     # load the data
@@ -88,20 +111,29 @@ if __name__ == '__main__':
         logger.critical("failed to load '%s' (%s) with %r",
                         args.infile, args.input_type, e)
     else:
-        logger.info('loaded model: %r in %.2fs', model, _time)
+        logger.info('loaded model: %s in %.2fs', model, _time)
     
     # run dimensionality reduction
     logger.info('using algorithm %s for dimensionality reduction', args.projection)
     try:
-        X, _time = calculate_embedding(model.wv.vectors, verbose = 2, n_iter = 250)
+        X, _time = calculate_embedding(model.wv.vectors, args.projection, n_iter = 250, verbose = 2)
     except Exception as e:
         logger.critical("failed to perform dimensionality reduction with %r", e)
     else:
         logger.info('computed 2D embedding in %.2fs', _time)
-
+    
+    # run clustering
+    logger.info('using cluster algorithm %s for finding clusters', args.clustering)
+    try:
+        cluster_ids, _time = build_clusters(model.wv.vectors, args.clustering, n_clusters = len(model.wv.vocab) // 5)
+    except Exception as e:
+        logger.critical("failed building clusters with %r", e)
+    else:
+        logger.info('built clusters in %.2fs', _time)
+        
     # preparing data for visualization
     try:
-        data, _time = prepare_data(X, model.wv.vocab)
+        data, _time = prepare_data(X, model.wv.vocab, cluster_ids, model)
     except Exception as e:
         logger.critical("failed to prepare data with %r", e)
     else:

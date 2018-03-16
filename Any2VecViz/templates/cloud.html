@@ -14,8 +14,10 @@
     <label id="query">query <input type="search" id="query_input"></label>
   </div>
   <div id="clusters"></div>
-  <div id="similarities"></div>
-<svg></svg>
+  <div id="similarities">
+    <svg height='0' width="100%"></svg>
+  </div>
+<svg id="map"></svg>
 <script>
 draw_embedding({{ visData|safe}}, {{ xmin }}, {{ xmax }}, {{ ymin }}, {{ ymax }});
 </script>

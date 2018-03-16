@@ -52,8 +52,7 @@ input[type=checkbox] {
 	margin-left: 8px;
 }
 
-svg {
-	border: 1px solid red;
+#map {
 	padding: 10px;
 	display: block;
 }
@@ -75,4 +74,15 @@ svg {
 	dominant-baseline: middle;
 	visibility: hidden;
 	cursor: pointer;
+}
+
+.sim-label {
+	font-size: 0.75em;
+	text-anchor: end;
+	dominant-baseline: middle;
+}
+
+.sim-heading {
+	margin-top: 0;
+	margin-bottom: 0.5em;
 }

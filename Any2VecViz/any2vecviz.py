@@ -99,6 +99,10 @@ if __name__ == '__main__':
                         choices = ['tsne', 'pca'],
                         help = 'dimensionality reduction algorithm'
                         )
+    parser.add_argument('--projection-kwargs',
+                        dest = 'projection_kwargs',
+                        default = '{}',
+                        help = 'keyword dictionary passed to projection algorithm')
     parser.add_argument('--clustering',
                         type = str,
                         default = 'agglo',
@@ -112,6 +116,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # preprocess arguments
+    projection_kwargs = json.loads(args.projection_kwargs)
     cluster_kwargs = json.loads(args.cluster_kwargs)
 
     # load the data
@@ -126,7 +131,8 @@ if __name__ == '__main__':
     # run dimensionality reduction
     logger.info('using algorithm %s for dimensionality reduction', args.projection)
     try:
-        X, _time = calculate_embedding(model.wv.vectors, args.projection, verbose = 2)
+        logger.debug('using projection options: %r', projection_kwargs)
+        X, _time = calculate_embedding(model.wv.vectors, args.projection, **projection_kwargs)
     except Exception as e:
         logger.critical("failed to perform dimensionality reduction with %r", e)
     else:
@@ -140,6 +146,7 @@ if __name__ == '__main__':
             cluster_kwargs['n_clusters'] = len(model.wv.vocab) // cluster_kwargs['avg_cluster_size']
             del cluster_kwargs['avg_cluster_size']
             
+        logger.debug('using clustering options: %r', cluster_kwargs)
         cluster_ids, _time = build_clusters(model.wv.vectors, args.clustering, **cluster_kwargs)
     except Exception as e:
         logger.critical("failed building clusters with %r", e)

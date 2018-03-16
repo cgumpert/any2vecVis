@@ -1,3 +1,4 @@
+import json
 import logging
 from flask import Flask, render_template
 import numpy as np
@@ -104,8 +105,15 @@ if __name__ == '__main__':
                         choices = ['agglo'],
                         help = 'cluster algorithm for building finding clusters in vector space'
                         )
+    parser.add_argument('--cluster-kwargs',
+                        dest = 'cluster_kwargs',
+                        default = '{}',
+                        help = 'keyword dictionary passed to cluster algorithm')
     args = parser.parse_args()
     
+    # preprocess arguments
+    cluster_kwargs = json.loads(args.cluster_kwargs)
+
     # load the data
     try:
         model, _time = load_vector_model(args.infile, args.input_type)
@@ -127,11 +135,16 @@ if __name__ == '__main__':
     # run clustering
     logger.info('using cluster algorithm %s for finding clusters', args.clustering)
     try:
-        cluster_ids, _time = build_clusters(model.wv.vectors, args.clustering, n_clusters = len(model.wv.vocab) // 5)
+        if 'n_clusters' not in cluster_kwargs and 'avg_cluster_size' in cluster_kwargs:
+            logger.info("set number of cluster such that the average cluster size is %d", cluster_kwargs['avg_cluster_size'])
+            cluster_kwargs['n_clusters'] = len(model.wv.vocab) // cluster_kwargs['avg_cluster_size']
+            del cluster_kwargs['avg_cluster_size']
+            
+        cluster_ids, _time = build_clusters(model.wv.vectors, args.clustering, **cluster_kwargs)
     except Exception as e:
         logger.critical("failed building clusters with %r", e)
     else:
-        logger.info('built clusters in %.2fs', _time)
+        logger.info('found %d different clusters in %.2fs', len(np.unique(cluster_ids)), _time)
         
     # preparing data for visualization
     try:

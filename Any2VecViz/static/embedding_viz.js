@@ -4,6 +4,8 @@ var defaultRadius = 5;
 var minRadius = 2;
 var maxRadius = 25;
 
+var defaultFontSize = '0.75em';
+
 var colorScale = d3.scaleOrdinal(d3['schemeCategory10']);
 var currentColor = 0;
 
@@ -119,10 +121,15 @@ function resetted() {
 }
 
 function clearQuerySelection() {
-  svg.selectAll('.queried')
+  svg.selectAll('.node.queried')
   	.attr('r', defaultRadius)
   	.style('fill', '#BBB')
   	.classed('queried', false);
+
+  svg.selectAll('.label.queried')
+	.style('font-size', defaultFontSize)
+	.style('fill', '#000')
+	.classed('queried', false);
 }
 
 function clearSelection() {
@@ -250,5 +257,17 @@ function highlightNodes(label, contains) {
       .duration(750)
       .attr('r', 10)
       .style('fill', 'red');     
+
+	svg.selectAll('.label')
+    .filter(function(d) {return contains ? d.label.includes(label) : d.label == label;})
+    .classed('queried', true)
+    .transition()
+    .duration(500)
+    .style('font-size', '2em')
+    .style('fill', 'blue')
+    .transition()
+    .duration(750)
+    .style('font-size', '1.25em')
+    .style('fill', 'red');
 }
 }

@@ -92,7 +92,7 @@ d3.select("#clear")
     .on("click", clearSelection);
 
 d3.select("#query_input")
-	.on("search", queryToken);
+	.on("keyup", queryToken);
 
 d3.selectAll("input[name=nodeSize]")
 	.on("change", changeNodeSize);
@@ -240,9 +240,12 @@ function changeNodeSize() {
 }
 
 function queryToken() {
-	clearQuerySelection();
-	var token = d3.select('#query_input').node().value;
-	highlightNodes(token, true);
+	if(d3.event.keyCode == 13) {
+		clearQuerySelection();
+		var token = d3.select('#query_input').node().value;
+		console.log(token);
+		highlightNodes(token, true);
+	}
 }
 
 function highlightNodes(label, contains) {

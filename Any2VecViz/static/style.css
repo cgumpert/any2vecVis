@@ -6,6 +6,10 @@ body {
 	margin: 0;
 }
 
+button {
+	font-size: 12px;	
+}
+
 input[type=checkbox] {
 	vertical-align: middle;
 }
@@ -14,11 +18,12 @@ input[type=checkbox] {
 	position: absolute;
 	top: 20px;
 	left: 20px;
+	background: rgba(255, 255, 255, 0.8);
 }
 
 #clusters {
 	position: absolute;
-	top: 230px;
+	top: 250px;
 	left: 22px;
 	font-size: 12px;
 	background: rgba(255, 255, 255, 0.8);
@@ -42,9 +47,9 @@ input[type=checkbox] {
 	margin-left: 10px;
 }
 
-#query {
+#query_input {
 	vertical-align: middle;
-	margin-left: 8px;
+	width: 150px;
 }
 
 #map {
@@ -90,7 +95,7 @@ input[type=checkbox] {
 .sim-label {
 	font-size: 10px;
 	text-anchor: end;
-	alignment-baseline: middle;
+	dominant-baseline: middle;
 	cursor: pointer;
 }
 
@@ -98,7 +103,7 @@ input[type=checkbox] {
 	font-size: 10px;
 	text-anchor: end;
 	fill: white;
-	alignment-baseline: middle;
+	dominant-baseline: middle;
 }
 
 .sim-heading {

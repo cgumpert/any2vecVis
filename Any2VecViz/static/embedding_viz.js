@@ -1,5 +1,5 @@
 // default/start values
-var labels_visible = false;
+var labelsVisible = false;
 
 // node appearance
 var defaultRadius = 5;
@@ -15,11 +15,11 @@ var currentColor = 0;
 
 // toggle between showing nodes and labels
 function toggleLabels() {
-	var label_state = labels_visible ? 'hidden' : 'visible';
-	var node_state = labels_visible ? 'visible' : 'hidden';
+	var label_state = labelsVisible ? 'hidden' : 'visible';
+	var node_state = labelsVisible ? 'visible' : 'hidden';
 	d3.selectAll('.label').style('visibility', label_state);
 	d3.selectAll('.node').style('visibility', node_state);
-	labels_visible = !labels_visible;
+	labelsVisible = !labelsVisible;
 }
 
 // main draw function
@@ -88,7 +88,7 @@ function draw_embedding(data, xmin, xmax, ymin, ymax) {
 	d3.select("#clear").on("click", clearSelection);
 	d3.select("#query_input").on("keyup", queryToken);
 	d3.selectAll("input[name=nodeSize]").on("change", changeNodeSize);
-	
+
 	svg.call(zoom);
 
 	// perform zoom operation by recalculating the node and label positions
@@ -110,6 +110,12 @@ function draw_embedding(data, xmin, xmax, ymin, ymax) {
 
 	// reset to initial state
 	function resetted() {
+		currentColor = 0;
+		d3.select('#tl_nodes').node().checked = true;
+		if (labelsVisible)
+			toggleLabels();
+		d3.select('#ns_fixed').node().checked = true;
+		changeNodeSize();
 		clearSelection();
 		svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
 	}

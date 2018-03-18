@@ -114,6 +114,8 @@ function draw_embedding(data, xmin, xmax, ymin, ymax) {
 		d3.select('#tl_nodes').node().checked = true;
 		if (labelsVisible)
 			toggleLabels();
+		d3.select('#ns_fixed').node().checked = true;
+		changeNodeSize();
 		clearSelection();
 		svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
 	}

@@ -110,6 +110,7 @@ function draw_embedding(data, xmin, xmax, ymin, ymax) {
 
 	// reset to initial state
 	function resetted() {
+		currentColor = 0;
 		clearSelection();
 		svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
 	}

@@ -3,11 +3,13 @@ var labelsVisible = false;
 
 // node appearance
 var defaultRadius = 5;
-var minRadius = 2;
-var maxRadius = 25;
 
 // label appearance
-var defaultFontSize = '0.75em';
+var defaultFontSize = 0.75;
+
+// scale range for scaling by count/rank
+var minScale = 0.2;
+var maxScale = 5;
 
 // cluster colors
 var colorScale = d3.scaleOrdinal(d3['schemeCategory10']);
@@ -47,9 +49,9 @@ function draw_embedding(data, xmin, xmax, ymin, ymax) {
 		return o.count;
 	}));
 	var countScale = d3.scaleLog().domain([ minTokenCount, maxTokenCount ])
-			.range([ minRadius, maxRadius ]);
+			.range([ minScale, maxScale ]);
 	var rankScale = d3.scaleLog().domain([ 1, data.length + 1 ]).range(
-			[ maxRadius, minRadius ]);
+			[ maxScale, minScale ]);
 
 	// dummy rectangle for zooming
 	var view = svg.append("rect").attr("class", "view").attr("x", 0.5).attr(
@@ -125,7 +127,7 @@ function draw_embedding(data, xmin, xmax, ymin, ymax) {
 		svg.selectAll('.node.queried').attr('r', defaultRadius).style('fill',
 				'#BBB').classed('queried', false);
 
-		svg.selectAll('.label.queried').style('font-size', defaultFontSize)
+		svg.selectAll('.label.queried').style('font-size', defaultFontSize + 'em')
 				.style('fill', '#000').classed('queried', false);
 	}
 
@@ -227,11 +229,22 @@ function draw_embedding(data, xmin, xmax, ymin, ymax) {
 				function(d) {
 					var radius = defaultRadius;
 					if (size_option === "rank") {
-						radius = rankScale(d.rank + 1);
+						radius = defaultRadius * rankScale(d.rank + 1);
 					} else if (size_option === "count") {
-						radius = countScale(d.count);
+						radius = defaultRadius * countScale(d.count);
 					}
 					return radius;
+				});
+		
+		svg.selectAll('.label').transition().duration(500).style('font-size',
+				function(d) {
+					var size = defaultFontSize;
+					if (size_option === "rank") {
+						size = defaultFontSize * rankScale(d.rank + 1);
+					} else if (size_option === "count") {
+						size = defaultFontSize * countScale(d.count);
+					}
+					return size + 'em';
 				});
 	}
 

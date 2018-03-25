@@ -1,29 +1,106 @@
 import json
 import logging
-from flask import Flask, render_template
 import numpy as np
+import os
+import sys
 import time
 
 # set up logging
 logger = logging.getLogger('Any2VecVis')
 logging.basicConfig(format = '[%(name)s] - %(levelname)-7s - %(message)s', level = logging.DEBUG)
 
-app = Flask(__name__)
+from http import server
 
-cache = {}
+def generate_handler(vis_data):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    template_file = os.path.abspath(os.path.join(BASE_DIR, 'templates/cloud.html'))
+    style_file = os.path.abspath(os.path.join(BASE_DIR, 'static/style.css'))
+    js_file = os.path.abspath(os.path.join(BASE_DIR, 'static/embedding_viz.js'))
+    with open(template_file) as infile:
+        html_template = infile.read() 
+    with open(style_file) as infile:
+        css_definitions = infile.read() 
+    with open(js_file) as infile:
+        js_definitions = infile.read()
 
-@app.route('/')
-def index():
-    X = cache.get('embedded_X', np.identity(2))
-    _min = np.min(X, axis = 0)
-    _max = np.max(X, axis = 0)
-    return render_template('cloud.html',
-                           visData = cache.get('data',[]),
-                           xmin = _min[0],
-                           xmax = _max[0],
-                           ymin = _min[1],
-                           ymax = _max[1],
-                           )
+    xmin = min([point['x'] for point in vis_data])
+    xmax = max([point['x'] for point in vis_data])
+    ymin = min([point['y'] for point in vis_data])
+    ymax = max([point['y'] for point in vis_data])
+    
+    class MyHandler(server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            """Respond to a GET request."""
+            if self.path == '/':
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write(html_template.format(CSS_DEFINITIONS = css_definitions,
+                                                      JS_CODE = js_definitions,
+                                                      VIS_DATA = str(vis_data),
+                                                      XMIN = xmin,
+                                                      XMAX = xmax,
+                                                      YMIN = ymin,
+                                                      YMAX = ymax
+                                                      ).encode())
+            else:
+                self.send_error(404)
+
+    return MyHandler
+
+def serve(data, ip = '127.0.0.1', port = 5001):
+    srvr = server.HTTPServer((ip, port), generate_handler(data))
+    
+    print("Serving to http://{0}:{1}/    [Ctrl-C to exit]".format(ip, port))
+    sys.stdout.flush()
+    
+    try:
+        srvr.serve_forever()
+    except (KeyboardInterrupt, SystemExit):
+        print("\nstopping Server...")
+
+    srvr.server_close()
+
+def prepare(model,
+            projection,
+            projection_kwargs,
+            clustering,
+            clustering_kwargs
+            ):
+    # run dimensionality reduction
+    logger.info('using algorithm %s for dimensionality reduction', projection)
+    try:
+        logger.debug('using projection options: %r', projection_kwargs)
+        X, _time = calculate_embedding(model.wv.vectors, projection, **projection_kwargs)
+    except Exception as e:
+        logger.critical("failed to perform dimensionality reduction with %r", e)
+    else:
+        logger.info('computed 2D embedding in %.2fs', _time)
+    
+    # run clustering
+    logger.info('using cluster algorithm %s for finding clusters', clustering)
+    try:
+        if 'n_clusters' not in cluster_kwargs and 'avg_cluster_size' in cluster_kwargs:
+            logger.info("set number of cluster such that the average cluster size is %d", cluster_kwargs['avg_cluster_size'])
+            cluster_kwargs['n_clusters'] = len(model.wv.vocab) // cluster_kwargs['avg_cluster_size']
+            del cluster_kwargs['avg_cluster_size']
+            
+        logger.debug('using clustering options: %r', cluster_kwargs)
+        cluster_ids, _time = build_clusters(model.wv.vectors, clustering, **cluster_kwargs)
+    except Exception as e:
+        logger.critical("failed building clusters with %r", e)
+    else:
+        logger.info('found %d different clusters in %.2fs', len(np.unique(cluster_ids)), _time)
+        
+    # preparing data for visualization
+    try:
+        data, _time = build_data_dict(X, model.wv.vocab, cluster_ids, model)
+    except Exception as e:
+        logger.critical("failed to prepare data with %r", e)
+    else:
+        logger.info('prepared %d data points for visualization in %.2fs', len(data), _time)
+    
+    return data
 
 def load_vector_model(infile_name, input_type):
     start = time.perf_counter()
@@ -61,7 +138,7 @@ def build_clusters(vectors, cluster_type, **kwargs):
     
     return cluster_ids, end - start
 
-def prepare_data(embedding, vocab, cluster_ids, model):
+def build_data_dict(embedding, vocab, cluster_ids, model):
     start = time.perf_counter()
     sorted_vocab = sorted(vocab, key = lambda t: vocab[t].count, reverse = True)
     data = [{'id': v.index,
@@ -128,42 +205,10 @@ if __name__ == '__main__':
     else:
         logger.info('loaded model: %s in %.2fs', model, _time)
     
-    # run dimensionality reduction
-    logger.info('using algorithm %s for dimensionality reduction', args.projection)
-    try:
-        logger.debug('using projection options: %r', projection_kwargs)
-        X, _time = calculate_embedding(model.wv.vectors, args.projection, **projection_kwargs)
-    except Exception as e:
-        logger.critical("failed to perform dimensionality reduction with %r", e)
-    else:
-        logger.info('computed 2D embedding in %.2fs', _time)
-    
-    # run clustering
-    logger.info('using cluster algorithm %s for finding clusters', args.clustering)
-    try:
-        if 'n_clusters' not in cluster_kwargs and 'avg_cluster_size' in cluster_kwargs:
-            logger.info("set number of cluster such that the average cluster size is %d", cluster_kwargs['avg_cluster_size'])
-            cluster_kwargs['n_clusters'] = len(model.wv.vocab) // cluster_kwargs['avg_cluster_size']
-            del cluster_kwargs['avg_cluster_size']
-            
-        logger.debug('using clustering options: %r', cluster_kwargs)
-        cluster_ids, _time = build_clusters(model.wv.vectors, args.clustering, **cluster_kwargs)
-    except Exception as e:
-        logger.critical("failed building clusters with %r", e)
-    else:
-        logger.info('found %d different clusters in %.2fs', len(np.unique(cluster_ids)), _time)
-        
-    # preparing data for visualization
-    try:
-        data, _time = prepare_data(X, model.wv.vocab, cluster_ids, model)
-    except Exception as e:
-        logger.critical("failed to prepare data with %r", e)
-    else:
-        logger.info('prepared %d data points for visualization in %.2fs', len(data), _time)
-    
-    # store things in cache
-    cache['model'] = model
-    cache['data'] = data
-    cache['embedded_X'] = X
-    
-    app.run()
+    vis_data = prepare(model,
+                       projection = args.projection,
+                       projection_kwargs = projection_kwargs,
+                       clustering = args.clustering,
+                       clustering_kwargs = cluster_kwargs
+                       )
+    serve(vis_data)

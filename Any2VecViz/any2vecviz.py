@@ -2,7 +2,6 @@ import json
 import logging
 import numpy as np
 import os
-import sys
 import time
 
 # set up logging
@@ -51,13 +50,12 @@ def generate_handler(vis_data):
 def serve(data, ip = '127.0.0.1', port = 5001):
     srvr = server.HTTPServer((ip, port), generate_handler(data))
     
-    print("Serving to http://{0}:{1}/    [Ctrl-C to exit]".format(ip, port))
-    sys.stdout.flush()
+    logger.info("Serving to http://%s:%d/    [Ctrl-C to exit]", ip, port)
     
     try:
         srvr.serve_forever()
     except (KeyboardInterrupt, SystemExit):
-        print("\nstopping Server...")
+        logger.info("stopping Server...")
 
     srvr.server_close()
 

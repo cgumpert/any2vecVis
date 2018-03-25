@@ -13,9 +13,9 @@ from http import server
 
 def generate_handler(vis_data):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    template_file = os.path.abspath(os.path.join(BASE_DIR, 'templates/cloud.html'))
-    style_file = os.path.abspath(os.path.join(BASE_DIR, 'static/style.css'))
-    js_file = os.path.abspath(os.path.join(BASE_DIR, 'static/embedding_viz.js'))
+    template_file = os.path.abspath(os.path.join(BASE_DIR, 'cloud.html'))
+    style_file = os.path.abspath(os.path.join(BASE_DIR, 'style.css'))
+    js_file = os.path.abspath(os.path.join(BASE_DIR, 'embedding_viz.js'))
     with open(template_file) as infile:
         html_template = infile.read() 
     with open(style_file) as infile:

@@ -1,4 +1,5 @@
 import json
+from http import server
 import logging
 import numpy as np
 import os
@@ -6,27 +7,26 @@ import time
 
 # set up logging
 logger = logging.getLogger('Any2VecVis')
-logging.basicConfig(format = '[%(name)s] - %(levelname)-7s - %(message)s', level = logging.DEBUG)
+logging.basicConfig(format='[%(name)s] - %(levelname)-7s - %(message)s', level=logging.DEBUG)
 
-from http import server
 
-def generate_handler(vis_data):
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    template_file = os.path.abspath(os.path.join(BASE_DIR, 'cloud.html'))
-    style_file = os.path.abspath(os.path.join(BASE_DIR, 'style.css'))
-    js_file = os.path.abspath(os.path.join(BASE_DIR, 'embedding_viz.js'))
+def generate_handler(data):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    template_file = os.path.abspath(os.path.join(base_dir, 'cloud.html'))
+    style_file = os.path.abspath(os.path.join(base_dir, 'style.css'))
+    js_file = os.path.abspath(os.path.join(base_dir, 'embedding_viz.js'))
     with open(template_file) as infile:
-        html_template = infile.read() 
+        html_template = infile.read()
     with open(style_file) as infile:
-        css_definitions = infile.read() 
+        css_definitions = infile.read()
     with open(js_file) as infile:
         js_definitions = infile.read()
 
-    xmin = min([point['x'] for point in vis_data])
-    xmax = max([point['x'] for point in vis_data])
-    ymin = min([point['y'] for point in vis_data])
-    ymax = max([point['y'] for point in vis_data])
-    
+    xmin = min([point['x'] for point in data])
+    xmax = max([point['x'] for point in data])
+    ymin = min([point['y'] for point in data])
+    ymax = max([point['y'] for point in data])
+
     class MyHandler(server.BaseHTTPRequestHandler):
         def do_GET(self):
             """Respond to a GET request."""
@@ -34,24 +34,25 @@ def generate_handler(vis_data):
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
-                self.wfile.write(html_template.format(CSS_DEFINITIONS = css_definitions,
-                                                      JS_CODE = js_definitions,
-                                                      VIS_DATA = str(vis_data),
-                                                      XMIN = xmin,
-                                                      XMAX = xmax,
-                                                      YMIN = ymin,
-                                                      YMAX = ymax
+                self.wfile.write(html_template.format(CSS_DEFINITIONS=css_definitions,
+                                                      JS_CODE=js_definitions,
+                                                      VIS_DATA=str(data),
+                                                      XMIN=xmin,
+                                                      XMAX=xmax,
+                                                      YMIN=ymin,
+                                                      YMAX=ymax
                                                       ).encode())
             else:
                 self.send_error(404)
 
     return MyHandler
 
-def serve(data, ip = '127.0.0.1', port = 5001):
+
+def serve(data, ip='127.0.0.1', port=5001):
     srvr = server.HTTPServer((ip, port), generate_handler(data))
-    
+
     logger.info("Serving to http://%s:%d/    [Ctrl-C to exit]", ip, port)
-    
+
     try:
         srvr.serve_forever()
     except (KeyboardInterrupt, SystemExit):
@@ -59,7 +60,8 @@ def serve(data, ip = '127.0.0.1', port = 5001):
 
     srvr.server_close()
 
-def prepare(model,
+
+def prepare(embeddings,
             projection,
             projection_kwargs,
             clustering,
@@ -69,61 +71,66 @@ def prepare(model,
     logger.info('using algorithm %s for dimensionality reduction', projection)
     try:
         logger.debug('using projection options: %r', projection_kwargs)
-        X, _time = calculate_embedding(model.wv.vectors, projection, **projection_kwargs)
-    except Exception as e:
-        logger.critical("failed to perform dimensionality reduction with %r", e)
+        x, embedding_time = calculate_embedding(embeddings.wv.vectors, projection, **projection_kwargs)
+    except Exception as exception:
+        logger.critical("failed to perform dimensionality reduction with %r", exception)
     else:
-        logger.info('computed 2D embedding in %.2fs', _time)
-    
+        logger.info('computed 2D embedding in %.2fs', embedding_time)
+
     # run clustering
     logger.info('using cluster algorithm %s for finding clusters', clustering)
     try:
-        if 'n_clusters' not in cluster_kwargs and 'avg_cluster_size' in cluster_kwargs:
-            logger.info("set number of cluster such that the average cluster size is %d", cluster_kwargs['avg_cluster_size'])
-            cluster_kwargs['n_clusters'] = len(model.wv.vocab) // cluster_kwargs['avg_cluster_size']
-            del cluster_kwargs['avg_cluster_size']
-            
-        logger.debug('using clustering options: %r', cluster_kwargs)
-        cluster_ids, _time = build_clusters(model.wv.vectors, clustering, **cluster_kwargs)
-    except Exception as e:
-        logger.critical("failed building clusters with %r", e)
+        if 'n_clusters' not in clustering_kwargs and 'avg_cluster_size' in clustering_kwargs:
+            logger.info("set number of cluster such that the average cluster size is %d",
+                        clustering_kwargs['avg_cluster_size'])
+            clustering_kwargs['n_clusters'] = len(embeddings.wv.vocab) // clustering_kwargs['avg_cluster_size']
+            del clustering_kwargs['avg_cluster_size']
+
+        logger.debug('using clustering options: %r', clustering_kwargs)
+        cluster_ids, cluster_time = build_clusters(embeddings.wv.vectors, clustering, **clustering_kwargs)
+    except Exception as exception:
+        logger.critical("failed building clusters with %r", exception)
     else:
-        logger.info('found %d different clusters in %.2fs', len(np.unique(cluster_ids)), _time)
-        
+        logger.info('found %d different clusters in %.2fs', len(np.unique(cluster_ids)), cluster_time)
+
     # preparing data for visualization
+    data = None
     try:
-        data, _time = build_data_dict(X, model.wv.vocab, cluster_ids, model)
-    except Exception as e:
-        logger.critical("failed to prepare data with %r", e)
+        data, vis_time = build_data_dict(x, embeddings.wv.vocab, cluster_ids, embeddings)
+    except Exception as exception:
+        logger.critical("failed to prepare data with %r", exception)
     else:
-        logger.info('prepared %d data points for visualization in %.2fs', len(data), _time)
-    
+        logger.info('prepared %d data points for visualization in %.2fs', len(data), vis_time)
+
     return data
+
 
 def load_vector_model(infile_name, input_type):
     start = time.perf_counter()
     if input_type == 'FastText':
         from gensim.models import FastText
-        model = FastText.load(infile_name)
+        embeddings = FastText.load(infile_name)
     else:
         raise RuntimeError("unknown input type '%s'" % args.input_type)
     end = time.perf_counter()
-    
-    return model, end - start
+
+    return embeddings, end - start
+
 
 def calculate_embedding(vectors, embedding_type, **kwargs):
     start = time.perf_counter()
     if embedding_type == 'tsne':
         from sklearn.manifold import TSNE
         tsne = TSNE(**kwargs)
-        X = tsne.fit_transform(vectors)
+        x = tsne.fit_transform(vectors)
     elif embedding_type == 'pca':
         pass
     else:
         raise RuntimeError("unknown projection '%s'" % embedding_type)
     end = time.perf_counter()
-    
-    return X, end - start
+
+    return x, end - start
+
 
 def build_clusters(vectors, cluster_type, **kwargs):
     start = time.perf_counter()
@@ -133,12 +140,13 @@ def build_clusters(vectors, cluster_type, **kwargs):
     else:
         raise RuntimeError("unknown clustering '%s'" % cluster_type)
     end = time.perf_counter()
-    
+
     return cluster_ids, end - start
 
-def build_data_dict(embedding, vocab, cluster_ids, model):
+
+def build_data_dict(embedding, vocab, cluster_ids, embeddings):
     start = time.perf_counter()
-    sorted_vocab = sorted(vocab, key = lambda t: vocab[t].count, reverse = True)
+    sorted_vocab = sorted(vocab, key=lambda t: vocab[t].count, reverse=True)
     data = [{'id': v.index,
              'count': v.count,
              'rank': sorted_vocab.index(token) + 1,
@@ -148,51 +156,53 @@ def build_data_dict(embedding, vocab, cluster_ids, model):
              'cluster': cluster_ids[v.index],
              'similarities': sorted(
                  [{'other_token': other_token,
-                   'similarity': model.wv.similarity(token, other_token)
-                  } for other_token, other_v in vocab.items()
-                    if (cluster_ids[other_v.index] == cluster_ids[v.index]) and (other_token != token)  
-                 ], key = lambda a: a['similarity'], reverse = True)
+                   'similarity': embeddings.wv.similarity(token, other_token)
+                   } for other_token, other_v in vocab.items()
+                  if (cluster_ids[other_v.index] == cluster_ids[v.index]) and (other_token != token)
+                  ], key=lambda a: a['similarity'], reverse=True)
              } for token, v in vocab.items()]
     end = time.perf_counter()
     return data, end - start
-    
+
+
 if __name__ == '__main__':
     # set up command line argument parsing
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-    parser = ArgumentParser(description = 'A general visualization for word embeddings',
-                            formatter_class = ArgumentDefaultsHelpFormatter)
-    parser.add_argument('infile', type = str, help = 'file containing gensim model')
+
+    parser = ArgumentParser(description='A general visualization for word embeddings',
+                            formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('infile', type=str, help='file containing gensim model')
     parser.add_argument('--input-type',
-                        dest = 'input_type',
-                        default = 'FastText',
-                        choices = ['FastText'],
-                        help = 'type of data to load'
+                        dest='input_type',
+                        default='FastText',
+                        choices=['FastText'],
+                        help='type of data to load'
                         )
     parser.add_argument('--projection',
-                        type = str,
-                        default = 'tsne',
-                        choices = ['tsne', 'pca'],
-                        help = 'dimensionality reduction algorithm'
+                        type=str,
+                        default='tsne',
+                        choices=['tsne', 'pca'],
+                        help='dimensionality reduction algorithm'
                         )
     parser.add_argument('--projection-kwargs',
-                        dest = 'projection_kwargs',
-                        default = '{}',
-                        help = 'keyword dictionary passed to projection algorithm')
+                        dest='projection_kwargs',
+                        default='{}',
+                        help='keyword dictionary passed to projection algorithm')
     parser.add_argument('--clustering',
-                        type = str,
-                        default = 'agglo',
-                        choices = ['agglo'],
-                        help = 'cluster algorithm for building finding clusters in vector space'
+                        type=str,
+                        default='agglo',
+                        choices=['agglo'],
+                        help='cluster algorithm for building finding clusters in vector space'
                         )
     parser.add_argument('--cluster-kwargs',
-                        dest = 'cluster_kwargs',
-                        default = '{}',
-                        help = 'keyword dictionary passed to cluster algorithm')
+                        dest='cluster_kwargs',
+                        default='{}',
+                        help='keyword dictionary passed to cluster algorithm')
     args = parser.parse_args()
-    
+
     # preprocess arguments
-    projection_kwargs = json.loads(args.projection_kwargs)
-    cluster_kwargs = json.loads(args.cluster_kwargs)
+    projection_options = json.loads(args.projection_kwargs)
+    clustering_options = json.loads(args.cluster_kwargs)
 
     # load the data
     try:
@@ -202,11 +212,10 @@ if __name__ == '__main__':
                         args.infile, args.input_type, e)
     else:
         logger.info('loaded model: %s in %.2fs', model, _time)
-    
-    vis_data = prepare(model,
-                       projection = args.projection,
-                       projection_kwargs = projection_kwargs,
-                       clustering = args.clustering,
-                       clustering_kwargs = cluster_kwargs
-                       )
-    serve(vis_data)
+
+        vis_data = prepare(model,
+                           projection=args.projection,
+                           projection_kwargs=projection_options,
+                           clustering=args.clustering,
+                           clustering_kwargs=clustering_options)
+        serve(vis_data)

@@ -2,9 +2,13 @@
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Lato">
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+  {CSS_DEFINITIONS:s}
+  </style>
   <script src="https://d3js.org/d3.v5.min.js"></script>
-  <script type="text/javascript" src="{{ url_for('static', filename='embedding_viz.js') }}"></script> 
+  <script type="text/javascript">
+  {JS_CODE:s}
+  </script> 
 </head>
 <body>
   <div id="controls">
@@ -32,6 +36,10 @@
   </div>
 <svg id="map"></svg>
 <script>
-draw_embedding({{ visData|safe}}, {{ xmin }}, {{ xmax }}, {{ ymin }}, {{ ymax }});
+draw_embedding({VIS_DATA:s},
+			   {XMIN:.2f},
+			   {XMAX:.2f},
+			   {YMIN:.2f},
+			   {YMAX:.2f});
 </script>
 </body>
